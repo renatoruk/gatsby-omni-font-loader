@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { kebabCase } from "../utils"
+import { FontConfig, kebabCase } from "../utils"
+import { FontVariant } from "../interfaces/FontVariant";
+import { getFontVariants } from "../utils/getFontVariants";
 
 declare var document: { fonts: any }
 
 export type hookOptions = {
-  fontNames: string[]
+  fontConfigs: FontConfig[]
   interval: number
   timeout: number
   scope: string
@@ -13,21 +15,26 @@ export type hookOptions = {
 type fontListenerHook = (options: hookOptions) => void
 
 export const useFontListener: fontListenerHook = ({
-  fontNames,
+  fontConfigs,
   interval,
   timeout,
   scope,
 }) => {
   const [hasLoaded, setHasLoaded] = useState<Boolean>(false)
-  const [loadedFonts, setLoadedFonts] = useState<string[]>([])
+  const [loadedFonts, setLoadedFonts] = useState<FontVariant[]>([])
   const [intervalId, setIntervalId] = useState<number>(-1)
   const attempts = useRef<number>(Math.floor(timeout / interval))
 
-  const hasFonts = fontNames && Boolean(fontNames.length)
+  const hasFonts = fontConfigs && Boolean(fontConfigs.length)
+  const fontVariants: FontVariant[] = useMemo<FontVariant[]>(() => {
+    return getFontVariants(fontConfigs)
+  }, [fontConfigs]);
 
-  const pendingFonts = useMemo(
-    () => fontNames.filter(fontName => !loadedFonts.includes(fontName)),
-    [loadedFonts, fontNames]
+  const pendingFonts: FontVariant[] = useMemo(
+    () => fontVariants.filter(variant => !loadedFonts.find(
+      loadedVariant => loadedVariant.className === variant.className)
+    ),
+    [loadedFonts, fontVariants]
   )
   const targetElement = useMemo(
     () => (scope === "html" ? "documentElement" : "body"),
@@ -56,8 +63,8 @@ export const useFontListener: fontListenerHook = ({
 
   function errorFallback() {
     setHasLoaded(true)
-    setLoadedFonts(fontNames)
-    fontNames.forEach(addClassName)
+    setLoadedFonts(fontVariants)
+    fontVariants.forEach(addClassName)
   }
 
   function handleApiError(error) {
@@ -66,30 +73,34 @@ export const useFontListener: fontListenerHook = ({
     errorFallback()
   }
 
-  function addClassName(fontName) {
-    document[targetElement].classList.add(`wf-${kebabCase(fontName)}--loaded`)
+  function addClassName(fontVariant: FontVariant) {
+    document[targetElement].classList.add(fontVariant.className)
   }
 
   function isFontLoaded() {
-    const loaded = []
+    const loaded: FontVariant[] = []
     attempts.current = attempts.current - 1
 
     if (attempts.current < 0) {
       handleApiError("Interval timeout reached, maybe due to slow connection.")
     }
 
-    const fontsLoading = pendingFonts.map(fontName => {
+    const fontsLoading: boolean[] = pendingFonts.map(fontVariant => {
       let hasLoaded = false
       try {
-        hasLoaded = document.fonts.check(`12px '${fontName}'`)
+        if (fontVariant.weight) {
+          hasLoaded = document.fonts.check(`${fontVariant.weight} 12px '${fontVariant.fontName}'`)
+        } else {
+          hasLoaded = document.fonts.check(`12px '${fontVariant.fontName}'`)
+        }
       } catch (error) {
         handleApiError(error)
         return
       }
 
       if (hasLoaded) {
-        addClassName(fontName)
-        loaded.push(fontName)
+        addClassName(fontVariant)
+        loaded.push(fontVariant)
       }
 
       return hasLoaded

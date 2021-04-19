@@ -6,7 +6,7 @@ import {
   TIMEOUT_DEFAULT,
   SCOPE_DEFAULT,
 } from "./consts"
-import { getFontFiles, getFontNames } from "./utils"
+import { getFontFiles, getFontConfigs } from "./utils"
 
 export const wrapRootElement = (
   { element },
@@ -26,12 +26,12 @@ export const wrapRootElement = (
 
   const allFonts = [...custom, ...web]
   const fontFiles = getFontFiles(allFonts)
-  const fontNames = getFontNames(allFonts)
+  const fontConfigs = getFontConfigs(allFonts)
 
-  const listenerProps = { fontNames, interval, timeout, scope }
+  const listenerProps = { fontConfigs, interval, timeout, scope }
 
   const hasFontFiles = Boolean(fontFiles.length)
-  const hasFontNames = Boolean(fontNames.length)
+  const hasFontNames = Boolean(fontConfigs.length)
 
   const children = (
     <>

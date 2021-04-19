@@ -1,6 +1,6 @@
 import { MODE_DEFAULT } from "./consts"
 import { getFontConfig, getTestFonts } from "./generators"
-import { getFontFiles, getFontNames } from "./utils"
+import { getFontFiles, getFontConfigs } from "./utils"
 
 export const onRenderBody = (
   { setHeadComponents, setPostBodyComponents },
@@ -15,7 +15,7 @@ export const onRenderBody = (
 ) => {
   const allFonts = [...web, ...custom]
   const allPreloads = preload.concat(getFontFiles(allFonts))
-  const fontNames = getFontNames(allFonts)
+  const fontConfigs = getFontConfigs(allFonts)
 
   const preloadConfig = getFontConfig(
     preconnect,
@@ -24,7 +24,7 @@ export const onRenderBody = (
   )
 
   if (enableListener && Boolean(allFonts.length) && mode === "async") {
-    const testFontConfig = getTestFonts(fontNames)
+    const testFontConfig = getTestFonts(fontConfigs)
     setPostBodyComponents(testFontConfig)
   }
 

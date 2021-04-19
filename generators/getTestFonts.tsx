@@ -1,7 +1,8 @@
 import React from "react"
+import { arrayCheck, FontConfig } from "../utils";
 
-export const getTestFonts = (fontNames: string[]) => {
-  const fontConfig = []
+export const getTestFonts = (fontConfigs: FontConfig[]) => {
+  const fontSpans = []
 
   const hiddenStyles: React.CSSProperties = {
     position: "absolute",
@@ -14,21 +15,35 @@ export const getTestFonts = (fontNames: string[]) => {
     border: "0",
   }
 
-  fontNames.forEach(fontName => {
-    fontConfig.push(
-      <span
-        key={`wf-test-${fontName}`}
-        aria-hidden="true"
-        style={{ ...hiddenStyles, fontFamily: `"${fontName}"` }}
-      >
+  fontConfigs.forEach(fontConfig => {
+    if (arrayCheck(fontConfig.weights)) {
+      fontConfig.weights.forEach((weight) => {
+        fontSpans.push(
+          <span
+            key={`wf-test-${fontConfig.name}-${weight}`}
+            aria-hidden="true"
+            style={{ ...hiddenStyles, fontFamily: `"${fontConfig.name}"`, fontWeight: weight }}
+          >
         &nbsp;
       </span>
-    )
+        )
+      })
+    } else {
+      fontSpans.push(
+        <span
+          key={`wf-test-${fontConfig.name}`}
+          aria-hidden="true"
+          style={{ ...hiddenStyles, fontFamily: `"${fontConfig.name}"` }}
+        >
+        &nbsp;
+      </span>
+      )
+    }
   })
-
+  console.log(fontSpans)
   return (
     <span key="wf-test-wrapper" style={hiddenStyles}>
-      {fontConfig}
+      {fontSpans}
     </span>
   )
 }
